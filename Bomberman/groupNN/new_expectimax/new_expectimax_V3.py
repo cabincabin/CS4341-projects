@@ -29,7 +29,7 @@ def expectimax(wrld, exit, depth):
 
         # Add monster type
         rnge = 1
-        if Mlist[0].avatar == 'A':
+        if Mlist[0].name == 'aggressive':
             # Aggressive type so change the range
             rnge = 2
         m1 = OpMonster(Mlist[0].x, Mlist[0].y, rnge)
@@ -37,7 +37,7 @@ def expectimax(wrld, exit, depth):
         if len(Mlist) >= 2:
 
             rnge = 1
-            if Mlist[1].avatar == 'A':
+            if Mlist[1].name == 'aggressive':
                 # Aggressive type so change the range
                 rnge = 2
             m2 = OpMonster(Mlist[1].x, Mlist[1].y, rnge)
