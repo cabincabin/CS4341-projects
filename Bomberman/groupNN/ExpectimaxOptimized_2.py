@@ -120,7 +120,7 @@ def expVal(wrldList, m, c, Exit, D, DMax):
 #expVal(OpMonster, OpMonster, OpChar, [int x, int y], int currentDepth, int Maxdepth)-> int value
 def maxVal(wrldList, m, c, Exit, D, DMax):
 
-    if D == DMax or ((m is not None) and moveDist(m, c) <= 1) or (m is None):
+    if D == DMax or ((m is not None) and moveDist(m, c) <= 1):
         return cost(wrldList[0], m, c, Exit, D, DMax)
 
     v = -(sys.maxsize - 1)
@@ -130,6 +130,7 @@ def maxVal(wrldList, m, c, Exit, D, DMax):
     for char in cList:
         v = max(v, expVal(wrldList[1:], m, char, Exit, D, DMax))
 
+    print(" " * D, "Best Move: ", cha)
     return v
 
 

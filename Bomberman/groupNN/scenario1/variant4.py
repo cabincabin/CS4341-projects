@@ -10,23 +10,29 @@ from monsters.selfpreserving_monster import SelfPreservingMonster
 
 # TODO This is your code!
 sys.path.insert(1, '../groupNN')
-from finitestatecharacterV4 import FiniteStateCharacter
+from finitestatecharacterfinal import FiniteStateCharacter
 
-
+wins = 0
 # Create the game
-random.seed(12) # TODO Change this if you want different random choices
-g = Game.fromfile('map.txt')
-g.add_monster(SelfPreservingMonster("monster", # name
-                                    "M",       # avatar
-                                    3, 13,     # position
-                                    2          # detection range
-))
+for i in range(25):
+    random.seed(i) # TODO Change this if you want different random choices
+    g = Game.fromfile('map.txt')
+    g.add_monster(SelfPreservingMonster("monster", # name
+                                        "A",       # avatar
+                                        3, 13,     # position
+                                        2          # detection range
+    ))
 
-# TODO Add your character
-g.add_character(FiniteStateCharacter("me", # name
-                              "C",  # avatar
-                              0, 0  # position
-))
+    # TODO Add your character
+    g.add_character(FiniteStateCharacter("me", # name
+                                  "C",  # avatar
+                                  0, 0  # position
+    ))
 
-# Run!
-g.go()
+    # Run!
+    try:
+        g.go(1)
+    except ValueError:
+        wins+=1
+
+print("These are the wins: " , wins)

@@ -1,14 +1,9 @@
 import sys
 import time
-import pathfinding as greedyBFS
-#############################################################################################
-#expectiMax(World, Character, MonsterList, [int xf, int yf], int)-> [int xOp, int yOp]
-#Given a world, ticked for any bombs, a character, a monsterlist of size 1 or 2 (as there is a max of 2 monsters)
-#a positional tuple of the exit, and the max depth to reach. The depth will early exit in the case of succsess (reaching
-#the exit) and failure (death)
-def expectiMax(wrld, Exit, Depth):
-  #________________________________________________________________________________#
-    #Set up charicter placement, converting charicters to optimized charicters
+
+def expectimax(wrld, exit, depth):
+    # ________________________________________________________________________________#
+    # Set up charicter placement, converting charicters to optimized charicters
     Mlist = []
     t = time.time()
 
@@ -23,11 +18,9 @@ def expectiMax(wrld, Exit, Depth):
     # Create our own version of the character
     c = OpChar(cExt.x, cExt.y)
 
-
     print("START:", c.x, c.y)
     m1 = None
     m2 = None
-
 
     if len(Mlist) == 0:
         # There are no monsters, so don't run expectimax
@@ -41,7 +34,7 @@ def expectiMax(wrld, Exit, Depth):
             rnge = 2
         m1 = OpMonster(Mlist[0].x, Mlist[0].y, rnge)
 
-        if len(Mlist)>=2:
+        if len(Mlist) >= 2:
 
             rnge = 1
             if Mlist[1].avatar == 'A':
@@ -49,98 +42,66 @@ def expectiMax(wrld, Exit, Depth):
                 rnge = 2
             m2 = OpMonster(Mlist[1].x, Mlist[1].y, rnge)
 
+    wrld_list = []
 
-  #________________________________________________________________________________#
-    #tick the world once for bombs, then generate all possible lists of movements
-    #generate all worlds at begining, so it doesn't have to be constantly recreated
+    for i in range(2 * depth + 1):
+        wrld_list.append(wrld)
 
-    # Empty the world of characters
-    wrld.character = {}
+    c_list = find_actions_OpObj(wrld_list[0], c)
 
-    # List of worlds
-    wrldList = []
+    m1_list = find_actions_monster(wrld_list[0], m1, c, depth)
 
-    # Populate the world list
-    for i in range(2 * Depth + 1):
-        # (newwrld, events) = wrld.next()
-        wrldList.append(wrld)
+    best_action = [-(sys.maxsize - 1), c]
 
-    # List of characters with different actions
-    cList = find_actions_OpObj(wrldList[0], c)
+    for char in c_list:
 
-    m1List = find_actions_monster(wrldList[0], m1, c, Depth)
-    # m2List = find_actions_monster(wrldList[0], m2, c, Depth)
+        v = 0
 
-  #________________________________________________________________________________#
-    #for every action possible, make a move then choose arg max
+        for m in m1_list:
 
-    BestAction = [-(sys.maxsize - 1), c]
+            v += max_node(wrld_list[1:], m, char, exit, 0 , depth)
 
-    for m in m1List:
+        if (v/len(m1_list)) > best_action[0]:
+            best_action = [(v/len(m1_list)), char]
+    return [best_action[1].x, best_action[1].y]
 
-        for char in cList:
+def exp_node(wrld_list, m, c, exit, d, dmax):
 
-            v = 0
+    v = 0
 
-            v += expVal(wrldList[1:], m, char, Exit, 0, Depth)
+    mList = find_actions_monster(wrld_list[0], m, c, dmax - d)
 
-            if v > BestAction[0]:
-                BestAction = [v, char]
-
-    #extract the char's movement
-    # raise EnvironmentError
-
-    return [BestAction[1].x, BestAction[1].y]
-
-
-#############################################################################################
-#expVal(OpMonster, OpMonster, OpChar, [int x, int y], int currentDepth, int Maxdepth)-> int value
-def expVal(wrldList, m, c, Exit, D, DMax):
-
-    if D == DMax or ((m is not None) and moveDist(m,c)<=1) or (m is None):
-        return cost(wrldList[0], m, c, Exit, D, DMax)
-
-    v=0
-
-    mList = find_actions_monster(wrldList[0], m, c, DMax - D)
-
-    #TODO MAYBE PROBLEMS????
-    if mList[0] is None and len(mList) == 1:
-        return maxVal(wrldList[1:], None, c, Exit, D + 1, DMax)
+    # #TODO MAYBE PROBLEMS????
+    # if mList[0] is None and len(mList) == 1:
+    #     return max_node(wrld_list[1:], None, c, exit, d + 1, dmax)
 
     for mon in mList:
-        p = 1/(len(mList))
-        a = maxVal(wrldList[1:], mon, c, Exit, D + 1, DMax)
+        p = 1/(len(mList)**d)
+        a = max_node(wrld_list[1:], mon, c, exit, d + 1, dmax)
         v = v + p * a
 
     return v
 
 
-#############################################################################################
-#expVal(OpMonster, OpMonster, OpChar, [int x, int y], int currentDepth, int Maxdepth)-> int value
-def maxVal(wrldList, m, c, Exit, D, DMax):
+def max_node(wrld_list, m, c, exit, d, dmax):
 
-    if D == DMax or ((m is not None) and moveDist(m, c) <= 1) or (m is None):
-        return cost(wrldList[0], m, c, Exit, D, DMax)
+    if d <= dmax or ((m is not None) and moveDist(m, c) <= 1) or m is None:
+        # We are dead or have reached max depth
+        return cost(wrld_list[0], m, c, exit, d, dmax)
 
-    v = -(sys.maxsize - 1)
+    v = (-sys.maxsize - 1)
 
-    cList = find_actions_OpObj(wrldList[0], c)
+    c_list = find_actions_OpObj(wrld_list[0], c)
 
-    for char in cList:
-        v = max(v, expVal(wrldList[1:], m, char, Exit, D, DMax))
-
-    return v
+    for char in c_list:
+        v = max(v, exp_node(wrld_list[1:], m, char, exit, d, dmax))
 
 
-#############################################################################################
 #moveDist(OpMonster, OpChar)-> int
 #returns the number of movements (disreguarding walls) needed to hit the charicter
 def moveDist(m, c):
     return abs(m.x - c.x)+ abs(m.y - c.y)
 
-
-#############################################################################################
 #expVal(OpMonster, OpMonster, OpChar, [int x, int y], int currentDepth, int Maxdepth)-> int value
 def cost(wrld, m, c, Exit, D, DMax):
 
@@ -161,7 +122,7 @@ def cost(wrld, m, c, Exit, D, DMax):
             return -(100*(DMax+2-D))
 
         # if currRange <= m.rnge+1:
-        cost += - 5 * (1+m.rnge - moveDist(m, c))  - 1.5 * (8 - len(find_actions_OpObj(wrld, c)))
+        cost += - 5 ** (1+m.rnge - moveDist(m, c))  - 1.5 * (8 - len(find_actions_OpObj(wrld, c)))
         #print("Yo hey, monstar here", m.x,m.y, cost)
 
 
@@ -174,10 +135,6 @@ def cost(wrld, m, c, Exit, D, DMax):
 
     return cost
 
-
-#############################################################################################
-#find_actions_monster(World, OpMonster, OpChar, Int)-> List[OpMonster]
-#given the world, a monster, and a charicter, returns a list of monster objects in all new positions
 #if close to the charicter, the only move is towards the char
 #if further than 2*depth+1, then the char is too far for any movements to afftect the charicter
 def find_actions_monster(wrld, m, c, DMax):
@@ -194,8 +151,8 @@ def find_actions_monster(wrld, m, c, DMax):
 
     #if too far away to kill the charicter in depth number of moves, then the monster should be ignored.
     #TODO make sure this doesn't cause problems
-    elif moveDist(m,c) > DMax*2+1:
-        return [None]
+    # elif moveDist(m,c) > DMax*2+1:
+    #     return [None]
 
     elif m.rnge==2:
         w = wrld.width()
@@ -221,8 +178,6 @@ def find_actions_monster(wrld, m, c, DMax):
     #     print("  ", m.x, m.y)
     return actions
 
-
-#############################################################################################
 # find_actions_Char(World, OpObj)-> List[OpChar]
 # given the world and a charicter, returns a list of Charicter objects in all new positions
 def find_actions_OpObj(wrld, OpObj):
@@ -252,25 +207,20 @@ def find_actions_OpObj(wrld, OpObj):
 
     return actions
 
-
-#############################################################################################
-#a version of the monster that is optimized for expectimax
-#takes an x,y position and a range for attack
+# a version of the monster that is optimized for expectimax
+# takes an x,y position and a range for attack
 class OpMonster:
 
-    def __init__(self, x, y, rnge= 0):
+    def __init__(self, x, y, rnge=0):
         self.x = x
         self.y = y
         self.xP = x
         self.yP = y
         self.rnge = rnge
 
-
-#x and y position
+# x and y position
 class OpChar:
 
     def __init__(self, x, y):
         self.x = x
         self.y = y
-
-#############################################################################################

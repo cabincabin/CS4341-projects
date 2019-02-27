@@ -1,8 +1,9 @@
 # This is necessary to find the main code
 import sys
+import copy
 import pathfinding as greedyBFS
 import pathfinding4conn as conn4
-import ExpectimaxOptimized as EM
+import new_expectimax.new_expectimax_V4 as EM
 
 sys.path.insert(0, '../bomberman')
 # Import necessary stuff
@@ -21,10 +22,12 @@ class FiniteStateCharacter(CharacterEntity):
     def __init__(self, name, avatar, x, y):
         CharacterEntity.__init__(self, name, avatar, x, y)
         self.ticked = False
+        self.oldwrld = None
+        self.currwrld = None
 
 
     def do(self, wrld):
-        print("doing")
+
         # This method calls different algorithms to find the next position to
         # move based on the finite state the character is in.
 
@@ -42,6 +45,10 @@ class FiniteStateCharacter(CharacterEntity):
         #get current position
         meX = wrld.me(self).x
         meY = wrld.me(self).y
+        print("doing", meX,meY)
+
+
+
 
         # True if there is at least 1 monster within 5 steps
         isThereMonster = self.isThereMonster(wrld, meX, meY)
@@ -112,17 +119,21 @@ class FiniteStateCharacter(CharacterEntity):
             for x,monstr in m:
                 ms = monstr
                 for ms in monstr:
-                    if self.MoveDist([meX, meY], [ms.x, ms.y]) <= 2:
+                    if self.MoveDist([meX, meY], [ms.x, ms.y]) <= 3:
                         return True
                 return False
 
     def expectimax(self, wrld, exit, meX, meY):
+        print("EXPECTIMAXING!")
         # Complete the greedy algorithm
         # Get the [x,y] coords of the next cell to go to
-        goTo = EM.expectiMax(wrld, exit, 2)
+        goTo = EM.expectimax(wrld, exit, 5)
 
         # move in direction to get to x,y found in prev step
         self.move(-meX + goTo[0], -meY + goTo[1])
+
+        if goTo[0] == exit[0] and goTo[1] == exit[1]:
+            raise ValueError
 
 
     def greedy(self, wrld, exit, meX, meY):
@@ -131,6 +142,10 @@ class FiniteStateCharacter(CharacterEntity):
         # Complete the greedy algorithm
         # Get the [x,y] coords of the next cell to go to
         goTo = greedyBFS.getNextStep([meX, meY], exit, wrld)
+
+        if goTo[0] == exit[0] and goTo[1] == exit[1]:
+            print("Threw that")
+            raise ValueError
 
         if goTo is None:
             # TODO: Improve bomb placement and pathfinding combinations
@@ -144,6 +159,7 @@ class FiniteStateCharacter(CharacterEntity):
             self.move(-meX + goTo[0], -meY + goTo[1])
 
     def avoidanceNoMster(self, wrld, exit, meX, meY, bmbs, exps):
+        print("here too")
         # Check if there are bombs
         if bmbs and not exps and self.ticked == False:
             print("here too")

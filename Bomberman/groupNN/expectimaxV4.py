@@ -47,11 +47,17 @@ def expectiMax(wrld, Depth):
     #may need to do try cach for above here, but it should exit before this becomes a conflict
     #TODO Watch for bug here, iteration error. To fix, see Cost or expVal
     #TODO: Process each m individually; possibly by distance
+
     m = next(iter(wrld.monsters.values()))[0]
+
     c = next(iter(wrld.characters.values()))[0]
+
     m.move(0,0)
+
     c.move(0,0)
+
     (newwrld, events) = wrld.next()
+
     wrld = newwrld
     #get actions
     mActList = find_actions(wrld, m.x, m.y)
@@ -94,6 +100,7 @@ def expVal(wrld, Depth, dM):
     if Depth >= dM or Exited:
         v = cost(wrld)
         return v
+
     #set cost to 0, as it will be a sum, inital state shouldn't affect it
     v=0
 
@@ -110,7 +117,7 @@ def expVal(wrld, Depth, dM):
 
             #TODO Update this so that actions, such as moving towards the player, or moving in the same direction it was
             #is higher
-            p = 1/(len(mActList)+len(cActList)) #can change later
+            p = 1/(len(mActList)*len(cActList)) #can change later
             #update as sum of all Ps
             v = v + p*maxValue(newwrld, Depth+1, dM)
 
